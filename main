@@ -1,0 +1,93 @@
+from openai import OpenAI
+from tkinter import *
+from tkinter.ttk import *
+
+API_KEY = [YOUR OPENAI API KEY HERE]
+client = OpenAI(api_key=API_KEY)
+
+window = Tk()
+window.configure(bg="#D3D3D3", pady=20)
+window.title("Chat with coding tutor")
+
+style = Style()
+# label_style = Style()
+# start_style = Style()
+# border = Style()
+
+message_box = Text(window, height=20, width=50, padx=10, pady=10, wrap="word", fg="black", background="white",
+                   borderwidth=0)
+message_box.grid(row=3, column=0, columnspan=3, padx=50)
+
+style.configure('TEntry', foreground='#b7245c', background="black")
+
+
+character_input = Entry(window, width=50)
+
+character_input.grid(row=1, column=1, pady=10)
+
+text = Label(window, text="Input a coding teacher", font=("Times New Roman", 12, "normal"))
+text.grid(row=0, column=1, pady=10)
+
+
+
+style.configure("TLabel",background="#D3D3D3")
+# text.configure(style="TLabel")
+
+style.configure('TButton', font=('calibri', 12, 'bold', 'underline'), foreground='#b7245c')
+
+def main():
+    def send_message():
+        user_input = input_field.get()
+        message_box.config(state=NORMAL)
+        message_box.insert(END, f"User: {user_input}\n", "user")
+        message_box.config(state=DISABLED)
+
+        message.append({"role": "user", "content": user_input})
+        chat = client.chat.completions.create(model="gpt-3.5-turbo", messages=message)
+        reply = chat.choices[0].message.content
+        message.append({"role": "user", "content": reply})
+
+        message_box.config(state=NORMAL)
+        message_box.insert(END, f"Gpt: {reply}\n", "bot")
+        message_box.config(state=DISABLED, bg="white")
+        input_field.delete(0, END)
+
+    prmpt = Label(window, text="Ask Question", font=("Times New Roman", 12, "normal"))
+    prmpt.grid(row=4, column=1, pady=10)
+    message_box.tag_configure("bot", font=("Times New Roman", 12, "normal"))
+    message_box.tag_configure("user", font=("Times New Roman", 12, "normal"))
+
+    input_field = Entry(window, width=50)
+    input_field.grid(row=5, column=1, pady=10)
+    input_field.config(style="TEntry")
+
+    send_button = Button(window, text="SEND", command=send_message, style="TButton")
+    send_button.grid(row=6, column=1)
+
+    character = character_input.get().title()
+    context = f"""Your name is {character}Gpt. You are a coding tutor. You have the personality of {character}. You say mean things {character} would say to
+    You first say hi to the student by calling them something {character} would call them. Make subtle references to their past and storyline.
+    """
+    message = [{"role": "user", "content": context}]
+    chat = client.chat.completions.create(model="gpt-3.5-turbo", messages=message)
+    reply = chat.choices[0].message.content
+    message_box.insert(END, f"{character}Gpt: {reply}\n", "bot")
+    message.append({"role": "user", "content": reply})
+
+    context_color = f"Imagine the shade most commonly associated with {character} in popular culture or literature. provide the hex code representing that shade. It can't be dark colors. That's all. No additional information is required. Dont say the color name or anything else."
+    message_color = [{"role": "user", "content": context_color}]
+    chat_color = client.chat.completions.create(model="gpt-3.5-turbo", messages=message_color)
+    reply_color = chat_color.choices[0].message.content
+    print(reply_color)
+    window.configure(bg=reply_color)
+    style.configure("BW.TLabel", background=reply_color)
+    text.config(style="BW.TLabel")
+    prmpt.config(style="BW.TLabel")
+    message_box.tag_configure("user", justify="right", foreground=reply_color)
+    message_box.tag_configure("bot", justify="left", foreground="black")
+
+
+go_button = Button(window, text="GO", command=main, style="TButton")
+go_button.grid(row=2, column=1, pady=10)
+
+window.mainloop()
